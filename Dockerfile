@@ -59,7 +59,7 @@ ADD electrum/${ELECTRUM_TAG}.patch .
 RUN git clone https://github.com/spesmilo/electrum.git && \
     cd /git/electrum && \
     git checkout ${ELECTRUM_COMMIT} && \
-    git apply ../${ELECTRUM_TAG}.patch && \
+    git apply --ignore-whitespace ../${ELECTRUM_TAG}.patch && \
     pip3 uninstall -y enum34 && \
     pip3 install . && \
     protoc --proto_path=electrum --python_out=electrum electrum/paymentrequest.proto && \
@@ -123,9 +123,10 @@ RUN sed --in-place "s|dev-local|dev-${LARAVEL_ELECTRUM_BRANCH}|" composer.json &
     php artisan ui vue --auth && \
     npm install && \
     mv .env.example .env && \
-    php artisan key:generate && \
-    ./env.sh && \
-    php artisan make:migration create_user && \
+    php artisan key:generate
+RUN chmod +x ./env.sh
+RUN /bin/sh ./env.sh
+RUN php artisan make:migration create_user && \
     sed --in-place "s|App\\\Providers\\\RouteServiceProvider::class,|App\\\Providers\\\RouteServiceProvider::class,\n        AraneaDev\\\Electrum\\\ElectrumServiceProvider::class,|" config/app.php && \
     sed --in-place "s|Vue.component('example-component', require('./components/ExampleComponent.vue').default);|Vue.component('electrum-wallet', require('$APP_ROOT/vendor/araneadev/laravel-electrum/src/resources/assets/js/Electrum.vue').default);|" $APP_ROOT/resources/js/app.js && \
     sed --in-place "s|'Your wallet created! Please load your wallet after recording your seed.'|response.data.msg|" vendor/araneadev/laravel-electrum/src/resources/assets/js/Electrum.vue && \
